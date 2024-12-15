@@ -1,5 +1,6 @@
 package com.varqulabs.compressorbitwise.di
 
+import com.varqulabs.compressorbitwise.domain.BitwiseCompressor
 import com.varqulabs.compressorbitwise.domain.CharacterMapper
 import com.varqulabs.compressorbitwise.domain.CharacterMapperImpl
 import com.varqulabs.compressorbitwise.domain.FileSizeValidator
@@ -37,6 +38,14 @@ object MapperModule {
         characterMapper: CharacterMapper
     ): FileSizeValidator {
         return FileSizeValidator(characterMapper)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBitwiseCompressor(
+        characterMapper: CharacterMapper
+    ): BitwiseCompressor {
+        return BitwiseCompressor(characterMapper)
     }
 
 }
