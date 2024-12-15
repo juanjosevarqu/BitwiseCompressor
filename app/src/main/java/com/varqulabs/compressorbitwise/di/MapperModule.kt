@@ -34,18 +34,18 @@ object MapperModule {
 
     @Provides
     @Singleton
-    fun provideFileSizeValidator(
-        characterMapper: CharacterMapper
-    ): FileSizeValidator {
-        return FileSizeValidator(characterMapper)
-    }
-
-    @Provides
-    @Singleton
     fun provideBitwiseCompressor(
         characterMapper: CharacterMapper
     ): BitwiseCompressor {
         return BitwiseCompressor(characterMapper)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFileSizeValidator(
+        characterMapper: CharacterMapper
+    ): FileSizeValidator {
+        return FileSizeValidator(characterMapper)
     }
 
 }
