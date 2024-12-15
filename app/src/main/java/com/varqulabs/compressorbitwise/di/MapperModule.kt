@@ -1,7 +1,9 @@
 package com.varqulabs.compressorbitwise.di
 
+import com.varqulabs.compressorbitwise.domain.BitwiseCompressor
 import com.varqulabs.compressorbitwise.domain.CharacterMapper
 import com.varqulabs.compressorbitwise.domain.CharacterMapperImpl
+import com.varqulabs.compressorbitwise.domain.FileSizeValidator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,6 +30,22 @@ object MapperModule {
             fallbackChar = '.',
             fallbackIndex = 61
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideBitwiseCompressor(
+        characterMapper: CharacterMapper
+    ): BitwiseCompressor {
+        return BitwiseCompressor(characterMapper)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFileSizeValidator(
+        characterMapper: CharacterMapper
+    ): FileSizeValidator {
+        return FileSizeValidator(characterMapper)
     }
 
 }

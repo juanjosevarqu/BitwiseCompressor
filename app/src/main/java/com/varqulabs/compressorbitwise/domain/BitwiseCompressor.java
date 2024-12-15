@@ -2,10 +2,13 @@ package com.varqulabs.compressorbitwise.domain;
 
 import androidx.annotation.NonNull;
 
+import javax.inject.Inject;
+
 public class BitwiseCompressor implements Compressor {
 
     private final CharacterMapper characterMapper;
 
+    @Inject
     public BitwiseCompressor(CharacterMapper characterMapper) {
         this.characterMapper = characterMapper;
     }
