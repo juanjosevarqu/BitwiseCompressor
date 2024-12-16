@@ -2,13 +2,10 @@ package com.varqulabs.compressorbitwise.domain;
 
 import androidx.annotation.NonNull;
 
-import javax.inject.Inject;
-
 public class BitwiseCompressor implements Compressor {
 
     private final CharacterMapper characterMapper;
 
-    @Inject
     public BitwiseCompressor(CharacterMapper characterMapper) {
         this.characterMapper = characterMapper;
     }
@@ -18,15 +15,24 @@ public class BitwiseCompressor implements Compressor {
     public byte[] compress(String input) {
         int bitsPerChar = characterMapper.getBitsPerCharacter();
         int totalBits = input.length() * bitsPerChar;
-        int totalBytes = (totalBits + 7) / 8;
+        int totalBytesForChars = (totalBits + 7) / 8;
+
+        // 4 bytes adicionales para la longitud original
+        int totalBytes = 4 + totalBytesForChars;
         byte[] compressedBytes = new byte[totalBytes];
 
-        int bitIndex = 0;
+        // Escribir manualmente la longitud original en los primeros 4 bytes
+        int length = input.length();
+        for (int i = 0; i < 4; i++) {
+            compressedBytes[i] = (byte) ((length >> ((3 - i) * 8)) & 0xFF);
+        }
 
+        // Comprimir los caracteres
+        int bitIndex = 32; // Saltamos los primeros 4 bytes (32 bits)
         for (char character : input.toCharArray()) {
             int charIndex = characterMapper.mapToIndex(character);
             writeBitsToByteArray(compressedBytes, charIndex, bitsPerChar, bitIndex);
-            bitIndex = bitIndex + bitsPerChar; // Evitamos `+=`
+            bitIndex += bitsPerChar;
         }
 
         return compressedBytes;
@@ -35,17 +41,21 @@ public class BitwiseCompressor implements Compressor {
     @NonNull
     @Override
     public String decompress(byte[] data) {
+        // Leer manualmente la longitud original de los primeros 4 bytes
+        int originalLength = 0;
+        for (int i = 0; i < 4; i++) {
+            originalLength = (originalLength << 8) | (data[i] & 0xFF);
+        }
+
         int bitsPerChar = characterMapper.getBitsPerCharacter();
-        int totalBits = data.length * 8;
-        int totalCharacters = totalBits / bitsPerChar;
-        StringBuilder decompressedString = new StringBuilder(totalCharacters);
+        StringBuilder decompressedString = new StringBuilder(originalLength);
 
-        int bitIndex = 0;
-
-        for (int i = 0; i < totalCharacters; i++) {
+        // Descomprimir los caracteres
+        int bitIndex = 32; // Saltamos los primeros 4 bytes (32 bits)
+        for (int i = 0; i < originalLength; i++) {
             int charIndex = readBitsFromByteArray(data, bitsPerChar, bitIndex);
             decompressedString.append(characterMapper.mapToChar(charIndex));
-            bitIndex = bitIndex + bitsPerChar; // Evitamos `+=`
+            bitIndex += bitsPerChar;
         }
 
         return decompressedString.toString();
