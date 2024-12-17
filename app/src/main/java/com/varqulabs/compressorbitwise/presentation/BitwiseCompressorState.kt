@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 
 @Stable
 data class BitwiseCompressorState(
+    val isLoading: Boolean = false,
     val inputText: String = "",
     val originalSizeBytes: Int = 0,
     val compressedSizeBytes: Int = 0,
