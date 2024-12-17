@@ -1,1 +1,1 @@
-Bitwise Compressor with Kotlin & Jetpack Compose
+Bitwise Compressor with Java, Kotlin & Jetpack Compose
