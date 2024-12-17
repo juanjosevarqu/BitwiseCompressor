@@ -1,100 +1,103 @@
 package com.varqulabs.compressorbitwise.domain;
 
-import androidx.annotation.NonNull;
-
-public class BitwiseCompressor implements Compressor {
+public class BitwiseCompressor {
 
     private final CharacterMapper characterMapper;
 
+    byte HEADER; // HEADER 1 byte, LONGITUD de la cadena 2 bytes
+
     public BitwiseCompressor(CharacterMapper characterMapper) {
         this.characterMapper = characterMapper;
+        HEADER = (byte) ((1 << 6) | (1 << 2)); // 0100 0100 igual a 68 en decimal
     }
 
-    @NonNull
-    @Override
     public byte[] compress(String input) {
+        validateInput(input);
+
         int bitsPerChar = characterMapper.getBitsPerCharacter();
         int totalBits = input.length() * bitsPerChar;
         int totalBytesForChars = (totalBits + 7) / 8;
 
-        // 4 bytes adicionales para la longitud original
-        int totalBytes = 4 + totalBytesForChars;
-        byte[] compressedBytes = new byte[totalBytes];
+        byte[] compressedBytes = new byte[1 + 2 + totalBytesForChars];
 
-        // Escribir manualmente la longitud original en los primeros 4 bytes
-        int length = input.length();
-        for (int i = 0; i < 4; i++) {
-            compressedBytes[i] = (byte) ((length >> ((3 - i) * 8)) & 0xFF);
-        }
+        compressedBytes[0] = HEADER;
 
-        // Comprimir los caracteres
-        int bitIndex = 32; // Saltamos los primeros 4 bytes (32 bits)
+        int originalLength = input.length();
+        compressedBytes[1] = (byte) (originalLength >> 8);
+        compressedBytes[2] = (byte) (originalLength & 255); // que seria 0b11111111 en binario
+
+        int bitIndex = 3 * 8; // Saltamos los primeros 3 bytes (24 bits)
+
         for (char character : input.toCharArray()) {
             int charIndex = characterMapper.mapToIndex(character);
             writeBitsToByteArray(compressedBytes, charIndex, bitsPerChar, bitIndex);
-            bitIndex += bitsPerChar;
+            bitIndex = bitIndex + bitsPerChar;
         }
 
         return compressedBytes;
     }
 
-    @NonNull
-    @Override
     public String decompress(byte[] data) {
-        // Leer manualmente la longitud original de los primeros 4 bytes
-        int originalLength = 0;
-        for (int i = 0; i < 4; i++) {
-            originalLength = (originalLength << 8) | (data[i] & 0xFF);
+        if (data[0] != HEADER) {
+            throw new IllegalArgumentException("Archivo no válido o no comprimido con BitwiseCompressor");
         }
+
+        int originalLength = ((data[1] & 255) << 8) | (data[2] & 255);
 
         int bitsPerChar = characterMapper.getBitsPerCharacter();
         StringBuilder decompressedString = new StringBuilder(originalLength);
 
-        // Descomprimir los caracteres
-        int bitIndex = 32; // Saltamos los primeros 4 bytes (32 bits)
+        int bitIndex = 3 * 8; // Saltamos cabecera + longitud = 24 bits
         for (int i = 0; i < originalLength; i++) {
             int charIndex = readBitsFromByteArray(data, bitsPerChar, bitIndex);
             decompressedString.append(characterMapper.mapToChar(charIndex));
-            bitIndex += bitsPerChar;
+            bitIndex = bitIndex + bitsPerChar;
         }
 
         return decompressedString.toString();
     }
 
+    private void validateInput(String input) {
+        if (input == null) {
+            throw new IllegalArgumentException("Input no puede ser nulo");
+        }
+        if (input.isEmpty()) {
+            throw new IllegalArgumentException("Input no puede estar vacío");
+        } else {
+            for (char c : input.toCharArray()) {
+                if (!characterMapper.isAllowed(c)) {
+                    throw new IllegalArgumentException("Caracter no válido: " + c);
+                }
+            }
+        }
+    }
+
     private void writeBitsToByteArray(byte[] byteArray, int value, int bitCount, int startBitIndex) {
-        for (int bitOffset = 0; bitOffset < bitCount; bitOffset++) {
-            // Extraer el bit individual desde "value"
-            int bitValue = (value >> (bitCount - 1 - bitOffset)) & 1;
+        for (int i = 0; i < bitCount; i++) {
+            // Extraer el bit actual de "value"
+            int bitValue = (value >> (bitCount - 1 - i)) & 1;
 
-            // Calcular la posición del byte dentro del array
-            int byteIndex = (startBitIndex + bitOffset) / 8;
+            // Calcular el byte y la posición del bit dentro del byte
+            int byteIndex = (startBitIndex + i) / 8;
+            int bitPosition = 7 - ((startBitIndex + i) % 8);
 
-            // Calcular la posición del bit dentro del byte actual
-            int bitPositionInByte = 7 - ((startBitIndex + bitOffset) % 8);
-
-            // Realizar la operación OR explícita para establecer el bit
-            byteArray[byteIndex] = (byte) (byteArray[byteIndex] | (bitValue << bitPositionInByte));
+            // Establecer el bit correspondiente
+            byteArray[byteIndex] = (byte) (byteArray[byteIndex] | (bitValue << bitPosition));
         }
     }
 
     private int readBitsFromByteArray(byte[] byteArray, int bitCount, int startBitIndex) {
         int result = 0;
+        for (int i = 0; i < bitCount; i++) {
+            // Calcular el byte y la posición del bit dentro del byte
+            int byteIndex = (startBitIndex + i) / 8;
+            int bitPosition = 7 - ((startBitIndex + i) % 8);
 
-        for (int bitOffset = 0; bitOffset < bitCount; bitOffset++) {
-            // Calcular la posición del byte dentro del array
-            int byteIndex = (startBitIndex + bitOffset) / 8;
-
-            // Calcular la posición del bit dentro del byte actual
-            int bitPositionInByte = 7 - ((startBitIndex + bitOffset) % 8);
-
-            // Extraer el bit individual desde el byte
-            int bitValue = (byteArray[byteIndex] >> bitPositionInByte) & 1;
-
-            // Realizar la operación OR explícita para acumular el bit en "result"
+            // Extraer el bit y agregarlo al resultado
+            int bitValue = (byteArray[byteIndex] >> bitPosition) & 1;
             result = (result << 1) | bitValue;
         }
 
         return result;
     }
 }
-
