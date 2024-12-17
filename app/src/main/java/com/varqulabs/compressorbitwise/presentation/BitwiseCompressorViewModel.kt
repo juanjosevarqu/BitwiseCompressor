@@ -24,9 +24,6 @@ class BitwiseCompressorViewModel : ViewModel() {
     private val _state = MutableStateFlow(BitwiseCompressorState())
     val state: StateFlow<BitwiseCompressorState> = _state
 
-    private val _compressedData = MutableStateFlow<ByteArray?>(null)
-    val compressedData: StateFlow<ByteArray?> = _compressedData
-
     fun updateAndCalculateSizes(input: String) {
         for (char in input) {
             if (!characterMapper.isAllowed(char)) {
