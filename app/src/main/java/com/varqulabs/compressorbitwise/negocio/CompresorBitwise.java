@@ -1,14 +1,32 @@
-package com.varqulabs.compressorbitwise.domain;
+package com.varqulabs.compressorbitwise.negocio;
 
-public class BitwiseCompressor {
+public class CompresorBitwise {
 
-    int BITS_POR_CARACTER = 6;
-    int MARCA_DE_AGUA;
-    int LONGITUD_MAXIMA_CADENA = 4093;
-    String caracteresValidos = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    public ValidadorDeCaracteres validador;
 
-    public BitwiseCompressor() {
-        MARCA_DE_AGUA = 61;
+    byte MARCA_DE_AGUA;
+    int LONGITUD_MAXIMA_CADENA;
+    byte BITS_POR_CARACTER;
+
+    public CompresorBitwise(ValidadorDeCaracteres validadorDeCaracteres) {
+        this.validador = validadorDeCaracteres;
+        this.MARCA_DE_AGUA = 61;
+        this.LONGITUD_MAXIMA_CADENA = 4093;
+        this.BITS_POR_CARACTER = validador.getBitsPorCaracter();
+    }
+
+    public CompresorBitwise(ValidadorDeCaracteres validadorDeCaracteres, byte marcaDeAgua) {
+        this.validador = validadorDeCaracteres;
+        this.MARCA_DE_AGUA = marcaDeAgua;
+        this.LONGITUD_MAXIMA_CADENA = 4093;
+        this.BITS_POR_CARACTER = validador.getBitsPorCaracter();
+    }
+
+    public CompresorBitwise(ValidadorDeCaracteres validadorDeCaracteres, int longitudMaximaCadena, byte marcaDeAgua) {
+        this.validador = validadorDeCaracteres;
+        this.MARCA_DE_AGUA = marcaDeAgua;
+        this.BITS_POR_CARACTER = validador.getBitsPorCaracter();
+        this.LONGITUD_MAXIMA_CADENA = longitudMaximaCadena;
     }
 
     public VectorBitsG comprimir(String cadena) {
@@ -25,21 +43,32 @@ public class BitwiseCompressor {
         VectorBitsG vector = new VectorBitsG(totalDeElementos, BITS_POR_CARACTER);
 
         vector.insertar(MARCA_DE_AGUA, 1);
-        int primeraParteLongitud = longitud >> 6; // BIT por caracter
-        int segundaParteLongitud = longitud & 63; //
+        int primeraParteLongitud = longitud >> 6;
+        int segundaParteLongitud = longitud & 63;
         vector.insertar(primeraParteLongitud, 2);
         vector.insertar(segundaParteLongitud, 3);
 
         int posicionSiguiente = 4;
         for (int i = 0; i < longitud; i++) {
             char caracter = cadena.charAt(i);
-            int indiceCaracter = caracteresValidos.indexOf(caracter);
-            if (indiceCaracter == -1) { indiceCaracter = 63; }
+            int indiceCaracter = validador.obtenerIndice(caracter);
             vector.insertar(indiceCaracter, posicionSiguiente);
             posicionSiguiente++;
         }
 
         return vector;
+    }
+
+    private void validarEntrada(String cadena) {
+        if (cadena == null || cadena.isEmpty()) {
+            throw new IllegalArgumentException("La cadena de entrada no puede ser nula o vacía");
+        } else {
+            for (char caracter : cadena.toCharArray()) {
+                if (!validador.esValido(caracter)) {
+                    throw new IllegalArgumentException("Caracter no válido: " + caracter);
+                }
+            }
+        }
     }
 
     public String descomprimir(VectorBitsG vector) {
@@ -50,8 +79,8 @@ public class BitwiseCompressor {
 
         StringBuilder cadenaDescomprimida = new StringBuilder(longitud);
         for (int i = 0; i < longitud; i++) {
-            int indiceCaracter = vector.Get(3 + i);
-            char caracter = caracteresValidos.charAt(indiceCaracter);
+            int indiceCaracter = vector.Get(4 + i, BITS_POR_CARACTER);
+            char caracter = validador.obtenerCaracter(indiceCaracter);
             cadenaDescomprimida.append(caracter);
         }
 
@@ -59,33 +88,21 @@ public class BitwiseCompressor {
     }
 
     private void validarMarcaDeAgua(VectorBitsG vector) {
-        int marcaDeAgua = vector.Get(1);
+        int marcaDeAgua = vector.Get(1, BITS_POR_CARACTER);
         if (marcaDeAgua != MARCA_DE_AGUA) {
             throw new IllegalArgumentException("Archivo no válido: marca de agua no encontrada, Este archivo no fue comprimido por este compresor o por nosotros");
         }
     }
 
     private int obtenerLongitud(VectorBitsG vector) {
-        int primeraParte = vector.Get(2);
-        int segundaParte = vector.Get(3);
+        int primeraParte = vector.Get(2, BITS_POR_CARACTER);
+        int segundaParte = vector.Get(3, BITS_POR_CARACTER);
         int longitud = (primeraParte << 6) | segundaParte;
 
         if (longitud > LONGITUD_MAXIMA_CADENA) {
             throw new IllegalArgumentException("Longitud de la cadena del Vector excede el máximo permitido");
         }
         return longitud;
-    }
-
-    private void validarEntrada(String cadena) {
-        if (cadena == null || cadena.isEmpty()) {
-            throw new IllegalArgumentException("La cadena de entrada no puede ser nula o vacía");
-        } else {
-            for (char c : cadena.toCharArray()) {
-                if (caracteresValidos.indexOf(c) == -1) {
-                    throw new IllegalArgumentException("Caracter no válido: " + c);
-                }
-            }
-        }
     }
 
     private void validarEstructura(VectorBitsG vector, int longitud) {
