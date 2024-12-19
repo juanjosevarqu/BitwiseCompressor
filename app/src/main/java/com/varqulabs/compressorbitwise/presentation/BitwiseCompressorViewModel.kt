@@ -2,7 +2,6 @@ package com.varqulabs.compressorbitwise.presentation
 
 import androidx.lifecycle.ViewModel
 import com.varqulabs.compressorbitwise.domain.BitwiseCompressor
-import com.varqulabs.compressorbitwise.domain.CharacterMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update

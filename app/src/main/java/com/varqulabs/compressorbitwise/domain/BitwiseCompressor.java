@@ -2,102 +2,97 @@ package com.varqulabs.compressorbitwise.domain;
 
 public class BitwiseCompressor {
 
-    private final CharacterMapper characterMapper;
+    int BITS_POR_CARACTER = 6;
+    int MARCA_DE_AGUA;
+    int LONGITUD_MAXIMA_CADENA = 4093;
+    String caracteresValidos = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-    byte HEADER; // HEADER 1 byte, LONGITUD de la cadena 2 bytes
-
-    public BitwiseCompressor(CharacterMapper characterMapper) {
-        this.characterMapper = characterMapper;
-        HEADER = (byte) ((1 << 6) | (1 << 2)); // 0100 0100 igual a 68 en decimal
+    public BitwiseCompressor() {
+        MARCA_DE_AGUA = 61;
     }
 
-    public byte[] compress(String input) {
-        validateInput(input);
+    public VectorBitsG comprimir(String cadena) {
+        validarEntrada(cadena);
 
-        int bitsPerChar = characterMapper.getBitsPerCharacter();
-        int totalBits = input.length() * bitsPerChar;
-        int totalBytesForChars = (totalBits + 7) / 8;
-
-        byte[] compressedBytes = new byte[1 + 2 + totalBytesForChars];
-
-        compressedBytes[0] = HEADER;
-
-        int originalLength = input.length();
-        compressedBytes[1] = (byte) (originalLength >> 8);
-        compressedBytes[2] = (byte) (originalLength & 255); // que seria 0b11111111 en binario
-
-        int bitIndex = 3 * 8; // Saltamos los primeros 3 bytes (24 bits)
-
-        for (char character : input.toCharArray()) {
-            int charIndex = characterMapper.mapToIndex(character);
-            writeBitsToByteArray(compressedBytes, charIndex, bitsPerChar, bitIndex);
-            bitIndex = bitIndex + bitsPerChar;
+        int longitud = cadena.length();
+        if (longitud > LONGITUD_MAXIMA_CADENA) {
+            throw new IllegalArgumentException("Longitud de la cadena excede el máximo permitido");
         }
 
-        return compressedBytes;
+        int totalBits = longitud * BITS_POR_CARACTER + 6 + 12; // 6 bits para la marca de agua y 12 para la longitud
+        int totalDeElementos = (totalBits + 5) / 6;
+
+        VectorBitsG vector = new VectorBitsG(totalDeElementos, BITS_POR_CARACTER);
+
+        vector.insertar(MARCA_DE_AGUA, 1);
+        int primeraParteLongitud = longitud >> 6; // BIT por caracter
+        int segundaParteLongitud = longitud & 63; //
+        vector.insertar(primeraParteLongitud, 2);
+        vector.insertar(segundaParteLongitud, 3);
+
+        int posicionSiguiente = 4;
+        for (int i = 0; i < longitud; i++) {
+            char caracter = cadena.charAt(i);
+            int indiceCaracter = caracteresValidos.indexOf(caracter);
+            if (indiceCaracter == -1) { indiceCaracter = 63; }
+            vector.insertar(indiceCaracter, posicionSiguiente);
+            posicionSiguiente++;
+        }
+
+        return vector;
     }
 
-    public String decompress(byte[] data) {
-        if (data[0] != HEADER) {
-            throw new IllegalArgumentException("Archivo no válido o no comprimido con BitwiseCompressor");
+    public String descomprimir(VectorBitsG vector) {
+        validarMarcaDeAgua(vector);
+
+        int longitud = obtenerLongitud(vector);
+        validarEstructura(vector, longitud);
+
+        StringBuilder cadenaDescomprimida = new StringBuilder(longitud);
+        for (int i = 0; i < longitud; i++) {
+            int indiceCaracter = vector.Get(3 + i);
+            char caracter = caracteresValidos.charAt(indiceCaracter);
+            cadenaDescomprimida.append(caracter);
         }
 
-        int originalLength = ((data[1] & 255) << 8) | (data[2] & 255);
-
-        int bitsPerChar = characterMapper.getBitsPerCharacter();
-        StringBuilder decompressedString = new StringBuilder(originalLength);
-
-        int bitIndex = 3 * 8; // Saltamos cabecera + longitud = 24 bits
-        for (int i = 0; i < originalLength; i++) {
-            int charIndex = readBitsFromByteArray(data, bitsPerChar, bitIndex);
-            decompressedString.append(characterMapper.mapToChar(charIndex));
-            bitIndex = bitIndex + bitsPerChar;
-        }
-
-        return decompressedString.toString();
+        return cadenaDescomprimida.toString();
     }
 
-    private void validateInput(String input) {
-        if (input == null) {
-            throw new IllegalArgumentException("Input no puede ser nulo");
+    private void validarMarcaDeAgua(VectorBitsG vector) {
+        int marcaDeAgua = vector.Get(1);
+        if (marcaDeAgua != MARCA_DE_AGUA) {
+            throw new IllegalArgumentException("Archivo no válido: marca de agua no encontrada, Este archivo no fue comprimido por este compresor o por nosotros");
         }
-        if (input.isEmpty()) {
-            throw new IllegalArgumentException("Input no puede estar vacío");
+    }
+
+    private int obtenerLongitud(VectorBitsG vector) {
+        int primeraParte = vector.Get(2);
+        int segundaParte = vector.Get(3);
+        int longitud = (primeraParte << 6) | segundaParte;
+
+        if (longitud > LONGITUD_MAXIMA_CADENA) {
+            throw new IllegalArgumentException("Longitud de la cadena del Vector excede el máximo permitido");
+        }
+        return longitud;
+    }
+
+    private void validarEntrada(String cadena) {
+        if (cadena == null || cadena.isEmpty()) {
+            throw new IllegalArgumentException("La cadena de entrada no puede ser nula o vacía");
         } else {
-            for (char c : input.toCharArray()) {
-                if (!characterMapper.isAllowed(c)) {
+            for (char c : cadena.toCharArray()) {
+                if (caracteresValidos.indexOf(c) == -1) {
                     throw new IllegalArgumentException("Caracter no válido: " + c);
                 }
             }
         }
     }
 
-    private void writeBitsToByteArray(byte[] byteArray, int value, int bitCount, int startBitIndex) {
-        for (int i = 0; i < bitCount; i++) {
-            // Extraer el bit actual de "value"
-            int bitValue = (value >> (bitCount - 1 - i)) & 1;
-
-            // Calcular el byte y la posición del bit dentro del byte
-            int byteIndex = (startBitIndex + i) / 8;
-            int bitPosition = 7 - ((startBitIndex + i) % 8);
-
-            // Establecer el bit correspondiente
-            byteArray[byteIndex] = (byte) (byteArray[byteIndex] | (bitValue << bitPosition));
+    private void validarEstructura(VectorBitsG vector, int longitud) {
+        int totalBits = longitud * BITS_POR_CARACTER + 6 + 12;
+        int totalElementosRequeridos = (totalBits + 5) / 6;
+        if (vector.getDimImaginaria() < totalElementosRequeridos) {
+            throw new IllegalArgumentException("El vector comprimido no tiene suficientes elementos para descomprimir");
         }
-    }
-
-    private int readBitsFromByteArray(byte[] byteArray, int bitCount, int startBitIndex) {
-        int result = 0;
-        for (int i = 0; i < bitCount; i++) {
-            // Calcular el byte y la posición del bit dentro del byte
-            int byteIndex = (startBitIndex + i) / 8;
-            int bitPosition = 7 - ((startBitIndex + i) % 8);
-
-            // Extraer el bit y agregarlo al resultado
-            int bitValue = (byteArray[byteIndex] >> bitPosition) & 1;
-            result = (result << 1) | bitValue;
-        }
-
-        return result;
     }
 }
