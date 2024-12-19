@@ -1,8 +1,8 @@
-package com.varqulabs.compressorbitwise.domain;
+package com.varqulabs.compressorbitwise.negocio;
 
 public class VectorBitsG {
 
-    int v[]; // vector de int, c/u 32 bits
+    public int v[]; // vector de int, c/u 32 bits
     int dimension; // dimension imaginaria
     int cantBits; // cantidad bits por elemento
 
@@ -37,7 +37,7 @@ public class VectorBitsG {
         }
     }
 
-    public int Get(int posicion) {
+    public int Get(int posicion, int cantBits) {
         int ent = obtenerNent(posicion);
         int nbit = obtenernbit(posicion);
         int mask = (((int) Math.pow(2, cantBits)) - 1);
@@ -65,7 +65,7 @@ public class VectorBitsG {
     public String toString() {
         String cad = "<< ";
         for (int i = 1; i <= dimension; i++) {
-            cad = cad + Get(i) + " , ";
+            cad = cad + Get(i, 6) + " , ";
         }
         cad = cad + ">>";
         return cad;
