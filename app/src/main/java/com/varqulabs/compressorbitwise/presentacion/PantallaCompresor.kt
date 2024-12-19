@@ -33,7 +33,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -347,16 +346,19 @@ private fun procesarArchivoSeleccionado(
         context.contentResolver.openInputStream(uri)?.use { inputStream ->
             val tipoDeArchivo = context.contentResolver.getType(uri)
 
+            val nombreDeArchivo = obtenerNombreDeArchivo(context, uri)
+            if (!esUnArchivoSoportado(nombreDeArchivo)) {
+                Toast.makeText(context, "Tipo de archivo no soportado", Toast.LENGTH_SHORT).show()
+                return
+            }
+
             when (tipoDeArchivo) {
-                "application/octet-stream" -> { // Archivo binario comprimido
+                "application/octet-stream" -> {
                     DataInputStream(inputStream).use { dis ->
                         val data = mutableListOf<Int>()
-                        while (dis.available() > 0) {
-                            data.add(dis.readInt())
-                        }
+                        while (dis.available() > 0) { data.add(dis.readInt()) }
                         val vectorComprimido = VectorBitsG(data.size * 32 / compresor.validador.bitsPorCaracter, compresor.validador.bitsPorCaracter.toInt())
                         vectorComprimido.v = data.toIntArray()
-
                         val textoDescomprimido = compresor.descomprimir(vectorComprimido)
                         onTextoCargado(textoDescomprimido)
                         Toast.makeText(context, "Archivo descomprimido con éxito", Toast.LENGTH_SHORT).show()
