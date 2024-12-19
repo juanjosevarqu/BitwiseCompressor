@@ -85,14 +85,6 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
         contract = ActivityResultContracts.CreateDocument("application/octet-stream"),
         onResult = { uri: Uri? ->
             uri?.let {
-                /*val textoComprimido = compresor.comprimir(textoDeEntrada)
-                if (compressedData != null) {
-                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(compressedData)
-                    }
-                } else {
-                    Toast.makeText(context, "Error al comprimir el archivo", Toast.LENGTH_LONG).show()
-                }*/
                 guardarVectorComprimido(context, compresor, textoDeEntrada, uri)
             }
         }
@@ -102,27 +94,6 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri: Uri? ->
             uri?.let {
-                /*val fileName = obtenerNombreDeArchivo(context, uri)
-                if (!esUnArchivoSoportado(fileName)) {
-                    Toast.makeText(context, "Tipo de archivo no soportado", Toast.LENGTH_SHORT).show()
-                    return@let
-                }
-                val tipoDeArchivo = context.contentResolver.getType(uri)
-                context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    when (tipoDeArchivo) {
-                        "application/octet-stream" -> {
-                            val data = inputStream.readBytes()
-                            val decompressedText = compresor.descomprimir() // Archivo que contiene el VectorDeBitsG
-                            if (decompressedText == null) {
-                                Toast.makeText(context, "Error al descomprimir. Archivo inválido o no soportado.", Toast.LENGTH_LONG).show()
-                            }
-                        }
-                        "text/plain" -> {
-                            val txt = inputStream.bufferedReader().use { it.readText() }
-                            textoDeEntrada = txt
-                        }
-                    }
-                }*/
                 procesarArchivoSeleccionado(context, uri, compresor, onTextoCargado = { texto ->
                     textoDeEntrada = texto
                 })
