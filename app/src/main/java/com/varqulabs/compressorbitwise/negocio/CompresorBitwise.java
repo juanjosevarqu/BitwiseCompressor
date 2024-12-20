@@ -112,7 +112,7 @@ public class CompresorBitwise {
     private void validarEstructura(VectorBitsG vector, int longitud) {
         int totalBits = longitud * BITS_POR_CARACTER + 6 + 12;
         int totalElementosRequeridos = (totalBits + 5) / 6;
-        if (vector.getDimImaginaria() < totalElementosRequeridos) {
+        if (vector.obtenerCantidadElementos() < totalElementosRequeridos) {
             throw new IllegalArgumentException("El vector comprimido no tiene suficientes elementos para descomprimir");
         }
     }

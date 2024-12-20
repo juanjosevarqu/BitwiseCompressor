@@ -72,9 +72,10 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
     val pesoOriginalBytes by remember(textoDeEntrada) { derivedStateOf { textoDeEntrada.length } }
     val pesoComprimidoBytes by remember(textoDeEntrada) {
         derivedStateOf {
-            val totalBits = textoDeEntrada.length * compresor.validador.bitsPorCaracter + 6 + 12
-            val totalInts = (totalBits + 31) / 32
-            totalInts * 4
+            val bitsPorCaracter = compresor.validador.bitsPorCaracter
+            val totalBits = textoDeEntrada.length * bitsPorCaracter + 6 + 12 // 6 bits para header, 12 para longitud
+            val totalBytes = (totalBits + 7) / 8 // Dividir entre 8 y redondear hacia arriba
+            totalBytes
         }
     }
 
@@ -385,7 +386,7 @@ private fun guardarVectorComprimido(
     try {
         context.contentResolver.openOutputStream(uri)?.use { outputStream ->
             DataOutputStream(outputStream).use { dos ->
-                vectorComprimido.v.forEach { valor -> dos.writeInt(valor) }
+                dos.write(vectorComprimido.obtenerArregloBytes())
             }
         }
         Toast.makeText(context, "Archivo comprimido guardado con éxito", Toast.LENGTH_SHORT).show()
@@ -413,10 +414,9 @@ private fun procesarArchivoSeleccionado(
             when (tipoDeArchivo) {
                 "application/octet-stream" -> {
                     DataInputStream(inputStream).use { dis ->
-                        val data = mutableListOf<Int>()
-                        while (dis.available() > 0) { data.add(dis.readInt()) }
-                        val vectorComprimido = VectorBitsG(data.size * 32 / compresor.validador.bitsPorCaracter, compresor.validador.bitsPorCaracter.toInt())
-                        vectorComprimido.v = data.toIntArray()
+                        val data = dis.readBytes()
+                        val vectorComprimido = VectorBitsG(data.size * 8 / compresor.validador.bitsPorCaracter, compresor.validador.bitsPorCaracter.toInt())
+                        vectorComprimido.actualizarDesdeByteArray(data)
                         val textoDescomprimido = compresor.descomprimir(vectorComprimido)
                         onTextoCargado(textoDescomprimido)
                         Toast.makeText(context, "Archivo descomprimido con éxito", Toast.LENGTH_SHORT).show()
