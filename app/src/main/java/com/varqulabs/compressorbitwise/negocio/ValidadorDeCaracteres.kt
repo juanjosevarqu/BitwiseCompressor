@@ -4,7 +4,7 @@ import kotlin.math.ceil
 import kotlin.math.log2
 
 class ValidadorDeCaracteres(caracteresPermitidos: List<Char>) {
-
+   // caracteresPermitidos = ['A', 'B', 'C']
     private val caracteresConIndices: Map<Char, Int> = caracteresPermitidos.withIndex().associate { it.value to it.index }
 
     private val indicesConCaracteres: Map<Int, Char> = caracteresPermitidos.withIndex().associate { it.index to it.value }

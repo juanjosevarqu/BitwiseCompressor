@@ -7,27 +7,36 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -36,14 +45,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.varqulabs.compressorbitwise.R
 import com.varqulabs.compressorbitwise.negocio.CompresorBitwise
 import com.varqulabs.compressorbitwise.negocio.VectorBitsG
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import androidx.compose.foundation.shape.RoundedCornerShape
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,9 +127,46 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
                 indication = null,
             ) { administradorDeTeclado.clearFocus() },
         topBar = {
+//            TopAppBar(
+//                title = { Text("Compressor de Archivos ") },
+//
+//            )
             TopAppBar(
-                title = { Text("Compresor/Descompresor de TXT") },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween // Distribuir elementos
+                    ) {
+                        // Logo en la esquina izquierda
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_logo), // Cambia "ic_logo" por el nombre de tu archivo
+                            contentDescription = "Logo",
+                            modifier = Modifier
+                                .size(40.dp) // Ajusta el tamaño según necesites
+                                .clip(CircleShape) // Hace que la imagen sea circular
+                                .background(Color.White) // Opcional: Agrega un fondo blanco para resaltarlo
+                                .padding(4.dp), // Opcional: Ajusta el padding dentro del círculo
+                            tint = Color.Unspecified // Mantiene el color original de la imagen
+                        )
+
+
+                        // Título centrado
+                        Text(
+                            text = "Compressor de Archivos",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+
+                        // Espacio vacío a la derecha (si no necesitas otro icono aquí)
+                        Spacer(modifier = Modifier.size(32.dp))
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color(0x000000) // Color de fondo
+                )
             )
+
         }
     ) { innerPadding ->
         Column(
@@ -158,10 +211,22 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
                 onClick = {
                     administradorDeTeclado.clearFocus()
                     seleccionadorDeDocumentos.launch(arrayOf("application/octet-stream", "text/plain"))
-                }
+                },
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp), // Esquinas rectas
+//                modifier = Modifier.padding(6.dp)
+                modifier = Modifier
+                    .fillMaxWidth() // Ocupa toda la fila
+                    .padding(vertical = 6.dp) // Espaciado vertical para separar del resto
             ) {
-                Text("Abrir archivo")
+                Icon(
+                    painter = painterResource(id = R.drawable.folder_open), // Reemplaza "folder_open" con tu ícono
+                    contentDescription = "Abrir Archivos",
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Abrir Archivos")
             }
+
         }
     }
 }
@@ -197,15 +262,20 @@ private fun CampoDeEntradaDeTexto(
             if (textoDeEntrada.isNotEmpty()) {
                 IconButton(
                     onClick = { cambioElTexto("") },
+
                 ) {
                     Icon(
                         imageVector = Icons.Default.Clear,
                         contentDescription = "Limpiar campo de texto",
+
                     )
                 }
             }
         },
         modifier = modifier.height(180.dp),
+//        modifier = modifier
+//            .fillMaxWidth() // Asegura que el cuadro de texto use todo el espacio
+//            .height(180.dp)
     )
 }
 
@@ -238,21 +308,38 @@ private fun BotonesDeCrear(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)// Espaciado entre los botones
     ) {
         Button(
             onClick = clickEnCrearTXT,
             enabled = crearTXTHabilitado,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),// Distribución proporcional
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp) // Esquinas rectas
         ) {
-            Text("Crear .TXT")
+            Icon(
+                painter = painterResource(id = R.drawable.file_save), // Tu ícono personalizado
+                contentDescription = "Guardar archivo TXT", // Descripción accesible
+                modifier = Modifier.size(20.dp) // Tamaño del ícono
+            )
+            Spacer(modifier = Modifier.width(8.dp)) // Espacio entre el ícono y el texto
+
+            Text("Guardar.txt")
         }
 
         Button(
             onClick = clickEnComprimir,
             enabled = comprimirHabilitado,
             modifier = Modifier.weight(1f),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp) // Esquinas rectas
         ) {
+
+            Icon(
+                painter = painterResource(id = R.drawable.file_save), // Tu ícono personalizado
+                contentDescription = "Comprimir archivo", // Descripción accesible
+                modifier = Modifier.size(20.dp) // Tamaño del ícono
+            )
+            Spacer(modifier = Modifier.width(8.dp)) // Espacio entre el ícono y el texto
+
             Text("Comprimir")
         }
     }

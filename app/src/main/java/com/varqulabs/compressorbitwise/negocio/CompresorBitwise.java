@@ -7,6 +7,8 @@ public class CompresorBitwise {
     byte MARCA_DE_AGUA;
     int LONGITUD_MAXIMA_CADENA;
     byte BITS_POR_CARACTER;
+    //Indica cuántos bits necesita cada carácter en la lista permitida.
+    //Esto depende del validador. Por ejemplo, si hay 4 caracteres permitidos, se necesitan 2 bits para representarlos.
 
     public CompresorBitwise(ValidadorDeCaracteres validadorDeCaracteres) {
         this.validador = validadorDeCaracteres;
@@ -31,6 +33,8 @@ public class CompresorBitwise {
 
     public VectorBitsG comprimir(String cadena) {
         validarEntrada(cadena);
+        //No tiene caracteres fuera de los permitidos.
+        //No es más larga que el máximo permitido.
 
         int longitud = cadena.length();
         if (longitud > LONGITUD_MAXIMA_CADENA) {
