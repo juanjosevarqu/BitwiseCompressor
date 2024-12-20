@@ -22,12 +22,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,16 +48,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.varqulabs.compressorbitwise.R
 import com.varqulabs.compressorbitwise.negocio.CompresorBitwise
 import com.varqulabs.compressorbitwise.negocio.VectorBitsG
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import androidx.compose.foundation.shape.RoundedCornerShape
-
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,7 +137,7 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween // Distribuir elementos
+                        horizontalArrangement = Arrangement.spacedBy(12.dp) // Distribuir elementos
                     ) {
                         // Logo en la esquina izquierda
                         Icon(
@@ -156,12 +151,13 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
                             tint = Color.Unspecified // Mantiene el color original de la imagen
                         )
 
-
                         // Título centrado
                         Text(
-                            text = "Compresor de Archivos",
+                            text = "Compresor de Archivos TXT",
                             color = Color.White,
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
 
                         // Espacio vacío a la derecha (si no necesitas otro icono aquí)
