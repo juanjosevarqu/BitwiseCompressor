@@ -96,7 +96,15 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
         }
     }
 
-    val creadorDeTXT = recordarCreadorDeTXT(context, texto = textoDeEntrada)
+    val creadorDeTXT = recordarCreadorDeTXT(
+        context = context,
+        texto = textoDeEntrada,
+        limpiarTexto = {
+            textoDeEntrada = ""
+            Toast.makeText(context, "Archivo TxT creado con éxito", Toast.LENGTH_SHORT).show()
+            administradorDeTeclado.clearFocus()
+        }
+    )
 
     val creadorDeArchivosBinarios = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/octet-stream"),
@@ -128,10 +136,7 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
                 indication = null,
             ) { administradorDeTeclado.clearFocus() },
         topBar = {
-//            TopAppBar(
-//                title = { Text("Compressor de Archivos ") },
-//
-//            )
+
             TopAppBar(
                 title = {
                     Row(
@@ -154,7 +159,7 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
 
                         // Título centrado
                         Text(
-                            text = "Compressor de Archivos",
+                            text = "Compresor de Archivos",
                             color = Color.White,
                             style = MaterialTheme.typography.titleLarge
                         )
@@ -236,12 +241,15 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
 private fun recordarCreadorDeTXT(
     context: Context,
     texto: String,
+    limpiarTexto: () -> Unit
+
 ) = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.CreateDocument("text/plain"),
     onResult = { uri: Uri? ->
         uri?.let {
             context.contentResolver.openOutputStream(uri)?.use { outputStream ->
                 outputStream.write(texto.toByteArray())
+                limpiarTexto()
             }
         }
     }
