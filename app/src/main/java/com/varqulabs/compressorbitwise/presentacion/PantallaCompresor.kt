@@ -105,7 +105,9 @@ fun PantallaCompresor(compresor: CompresorBitwise) {
         contract = ActivityResultContracts.CreateDocument("application/octet-stream"),
         onResult = { uri: Uri? ->
             uri?.let {
+                administradorDeTeclado.clearFocus()
                 guardarVectorComprimido(context, compresor, textoDeEntrada, uri)
+                textoDeEntrada = ""
             }
         }
     )
