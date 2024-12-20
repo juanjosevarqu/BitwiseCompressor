@@ -2,7 +2,7 @@ package com.varqulabs.compressorbitwise.negocio;
 
 public class VectorBitsG {
 
-    private final byte[] arregloBytes;
+    private final byte[] arregloBytes; // 8 bits en vez de 32 bits
     private final int cantidadElementos;
     private final int bitsPorElemento;
 
