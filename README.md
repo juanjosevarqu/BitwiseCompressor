@@ -1,7 +1,7 @@
 # 📱 Bitwise Compressor   
-Bitwise Compressor is an app that allows you to compress .txt files using Bitwise operations.
-Built with Java, Kotlin and Jetpack Compose.
-See more about Bitwise here: [Bitwise in Kotlin](https://www.baeldung.com/kotlin/bitwise-operators)
+Bitwise Compressor is an app that compresses `.txt` files using bitwise operations.    
+Built with Java, Kotlin, and Jetpack Compose.   
+See more about bitwise operations in Kotlin: [Bitwise in Kotlin](https://www.baeldung.com/kotlin/bitwise-operators)
 
 # Preview
 
